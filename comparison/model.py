@@ -50,7 +50,7 @@ class VAE(torch.nn.Module):
         return self.lik_dist(*lik_params)
 
     def reconstruct(self, xs: torch.Tensor) -> torch.Tensor:
-        """Given input 'xs', approximate 'xs' by mapping through latent space."""
+        """Given input `xs`, approximate `xs` by mapping through latent space."""
         with torch.no_grad():
             post_dist = self.forward(xs)
             mean = post_dist.sample(torch.Size([MEAN_SAMPLES])).mean(dim=0)
