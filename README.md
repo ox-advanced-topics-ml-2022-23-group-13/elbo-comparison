@@ -1,5 +1,4 @@
-https://arxiv.org/pdf/1802.04537.pdf
-https://yugeten.github.io/posts/2020/06/elbo/
+This group project submission is based off the contents of the paper [Tighter Variational Bounds are Not Necessarily Better (2019)](https://arxiv.org/pdf/1802.04537.pdf). 
 
 # Build Steps
 
