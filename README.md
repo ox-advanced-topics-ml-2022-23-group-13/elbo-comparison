@@ -24,11 +24,11 @@ $ conda activate elbo-comparison
 If you have installed any dependencies using the command `$ conda install ...`, you should export the updated environment file to `environment.yml`.
 
 ```
-$ conda env export | tee environment.yml
+(elbo-comparison) $ conda env export | tee environment.yml
 ```
 
 A more succinct alternative is
 
 ```
-$ conda env export --from-history | tee environment.yml
+(elbo-comparison) $ conda env export --from-history | tee environment.yml
 ```
