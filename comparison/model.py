@@ -7,6 +7,11 @@ MEAN_SAMPLES = 100
 
 
 class VAE(torch.nn.Module):
+    """
+    Base class for all implementations of VAE over datasets. 
+    Encoding, decoding and distribution families need to be specified.
+    """
+    
     def __init__(
         self,
         prior_dist: Type[dist.Distribution],
