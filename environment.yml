@@ -1,0 +1,9 @@
+name: elbo-comparison
+channels:
+  - defaults
+dependencies:
+  - torchaudio
+  - pytorch
+  - torchvision
+  - numpy
+prefix: /Users/andy/opt/anaconda3/envs/elbo-comparison
