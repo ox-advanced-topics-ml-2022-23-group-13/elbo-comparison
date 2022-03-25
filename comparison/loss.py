@@ -1,4 +1,5 @@
 import torch
+import math
 
 from comparison.model import VAEForwardResult
 
@@ -8,7 +9,7 @@ K_SAMPLE_DIM = 1 # Resampling for the same `x` tighten bound for IWAE
 BATCH_DIM = 2 # Also known as "N", sampling over multiple data points `xs`
 
 
-def var_evidence(res: VAEForwardResult) -> torch.Tensor:
+def var_log_evidence(res: VAEForwardResult) -> torch.Tensor:
     return (
         res.prior_dist.log_prob(res.zs)
         + res.lik_dist.log_prob(res.xs)
@@ -16,12 +17,12 @@ def var_evidence(res: VAEForwardResult) -> torch.Tensor:
     )
 
 def logmeanexp(xs: torch.Tensor, dim: int) -> torch.Tensor:
-    return torch.logsumexp(xs, dim=dim) - xs.size(dim)
+    return torch.logsumexp(xs, dim=dim) - math.log(xs.size(dim))
 
 
 def ELBO(res: VAEForwardResult) -> torch.Tensor:
     """The original ELBO definition."""
-    return var_evidence(res).mean(
+    return var_log_evidence(res).mean(
         dim=BATCH_DIM
     ).mean(
         dim=K_SAMPLE_DIM
@@ -38,7 +39,7 @@ def IWAE(res: VAEForwardResult) -> torch.Tensor:
     MIWAE is also captured by this function for values M, K > 1.
     """
     return logmeanexp(
-        var_evidence(res),
+        var_log_evidence(res),
         dim=K_SAMPLE_DIM
     ).mean(
         dim=M_SAMPLE_DIM
@@ -53,7 +54,7 @@ def CIWAE(res: VAEForwardResult, beta: float) -> torch.Tensor:
     `beta=1` is ELBO, `beta=0` is IWAE.
     """
     beta = torch.tensor(beta)
-    ev = var_evidence(res)
+    ev = var_log_evidence(res)
     comb = (
         beta * ev.mean(dim=K_SAMPLE_DIM)
         + (1 - beta) * logmeanexp(ev, dim=K_SAMPLE_DIM)
@@ -70,7 +71,7 @@ def PIWAE(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
     treating samples in the M dimension as if they were K), and it is 
     the role of the optimizer to apply gradients accordingly.
     """
-    ev = var_evidence(res)
+    ev = var_log_evidence(res)
 
     miwae = logmeanexp(
         ev,
