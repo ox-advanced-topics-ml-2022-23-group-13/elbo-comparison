@@ -82,10 +82,10 @@ class VAE(torch.nn.Module):
         lik_params = self.decode(zs)
         return self.lik_class(*lik_params)
 
-    def forward(self, xs: torch.Tensor) -> dist.Distribution:
+    def forward(self, xs: torch.Tensor, K=1) -> dist.Distribution:
         """Given input `xs`, returns the function p(x|z)"""
         post_dist = self.post_dist(xs)
-        zs = post_dist.rsample()  # reparameterisation trick
+        zs = post_dist.rsample(torch.Size([K]))  # reparameterisation trick
         lik_dist = self.lik_dist(zs)
         return VAEForwardResult(
             prior_dist=self.prior_dist(),
