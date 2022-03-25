@@ -11,18 +11,18 @@ class VAE(torch.nn.Module):
     Base class for all implementations of VAE over datasets. 
     Encoding, decoding and distribution families need to be specified.
     """
-    
+
     def __init__(
         self,
-        prior_dist: Type[dist.Distribution],
-        post_dist: Type[dist.Distribution],
-        lik_dist: Type[dist.Distribution],
+        prior_class: Type[dist.Distribution],
+        post_class: Type[dist.Distribution],
+        lik_class: Type[dist.Distribution],
     ):
         super().__init__()
 
-        self.prior_dist = prior_dist
-        self.post_dist = post_dist
-        self.lik_dist = lik_dist
+        self.prior_class = prior_class
+        self.post_class = post_class
+        self.lik_class = lik_class
 
     def encode(self, xs: torch.Tensor) -> tuple[torch.Tensor, ...]:
         """
@@ -42,16 +42,53 @@ class VAE(torch.nn.Module):
         """
         raise NotImplementedError
 
+    def prior_dist(self) -> dist.Distribution:
+        """
+        `p(z)` - the prior distribution over the latent space.
+        """
+        raise NotImplementedError
+
+    def post_dist(self, xs: torch.Tensor) -> dist.Distribution:
+        """
+        `q(z | x)` - a variational approximation of the true posterior `p(z | x)` of the
+        latent space given a sample point from the original space
+        """
+        post_params = self.encode(xs)
+        return self.post_class(*post_params)
+
+    def lik_dist(self, zs: torch.Tensor) -> dist.Distribution:
+        """
+        `p(x | z)` - the likelihood of reconstructing a sample point from the original space
+        `x` given a point in the latent space `z`
+        """
+        lik_params = self.decode(zs)
+        return self.lik_class(*lik_params)
+
     def forward(self, xs: torch.Tensor) -> dist.Distribution:
         """Given input `xs`, returns the function p(x|z)"""
-        post_params = self.encode(xs)
-        zs = self.post_dist(*post_params).rsample()  # reparameterisation trick
-        lik_params = self.decode(zs)
-        return self.lik_dist(*lik_params)
+        zs = self.post_dist(xs).rsample()  # reparameterisation trick
+        return self.lik_dist(zs)
+
+    @staticmethod
+    def _mean(recon_dist) -> torch.Tensor:
+        if hasattr(recon_dist, "mean"):
+            return recon_dist.mean.clone().detach()
+        else:
+            return recon_dist.sample(torch.Size([MEAN_SAMPLES])).mean(dim=0)
 
     def reconstruct(self, xs: torch.Tensor) -> torch.Tensor:
         """Given input `xs`, approximate `xs` by mapping through latent space."""
         with torch.no_grad():
-            post_dist = self.forward(xs)
-            mean = post_dist.sample(torch.Size([MEAN_SAMPLES])).mean(dim=0)
-        return mean
+            zs = self.post_dist(xs).sample()
+            recon_dist = self.lik_dist(zs)
+            recon = self._mean(recon_dist)
+        return recon
+
+    def sample(self) -> torch.Tensor:
+        """Samples random points from original space"""
+        with torch.no_grad():
+            zs = self.prior_dist().sample()
+            recon_dist = self.lik_dist(zs)
+            recon = self._mean(recon_dist)
+        return recon
+
