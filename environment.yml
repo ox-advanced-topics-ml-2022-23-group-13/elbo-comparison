@@ -6,4 +6,6 @@ dependencies:
   - pytorch
   - torchvision
   - numpy
+  - notebook
+  - tqdm
 prefix: /Users/andy/opt/anaconda3/envs/elbo-comparison

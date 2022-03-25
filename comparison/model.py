@@ -3,7 +3,29 @@ import torch
 from torch import distributions as dist
 
 
+# The following URL is a good resource on understanding the behaviour of
+# `torch.Tensor` shapes with PyTorch distributions
+#
+# https://bochang.me/blog/posts/pytorch-distributions/
+
+
 MEAN_SAMPLES = 100
+
+
+class VAEForwardResult:
+    def __init__(
+        self,
+        prior_dist: dist.Distribution,
+        post_dist: dist.Distribution,
+        lik_dist: dist.Distribution,
+        xs: torch.Tensor,
+        zs: torch.Tensor,
+    ):
+        self.prior_dist = prior_dist
+        self.post_dist = post_dist
+        self.lik_dist = lik_dist
+        self.xs = xs
+        self.zs = zs
 
 
 class VAE(torch.nn.Module):
@@ -13,14 +35,10 @@ class VAE(torch.nn.Module):
     """
 
     def __init__(
-        self,
-        prior_class: Type[dist.Distribution],
-        post_class: Type[dist.Distribution],
-        lik_class: Type[dist.Distribution],
+        self, post_class: Type[dist.Distribution], lik_class: Type[dist.Distribution],
     ):
         super().__init__()
 
-        self.prior_class = prior_class
         self.post_class = post_class
         self.lik_class = lik_class
 
@@ -66,14 +84,22 @@ class VAE(torch.nn.Module):
 
     def forward(self, xs: torch.Tensor) -> dist.Distribution:
         """Given input `xs`, returns the function p(x|z)"""
-        zs = self.post_dist(xs).rsample()  # reparameterisation trick
-        return self.lik_dist(zs)
+        post_dist = self.post_dist(xs)
+        zs = post_dist.rsample()  # reparameterisation trick
+        lik_dist = self.lik_dist(zs)
+        return VAEForwardResult(
+            prior_dist=self.prior_dist(),
+            post_dist=post_dist,
+            lik_dist=lik_dist,
+            xs=xs,
+            zs=zs,
+        )
 
     @staticmethod
     def _mean(recon_dist) -> torch.Tensor:
-        if hasattr(recon_dist, "mean"):
+        try:
             return recon_dist.mean.clone().detach()
-        else:
+        except NotImplementedError:
             return recon_dist.sample(torch.Size([MEAN_SAMPLES])).mean(dim=0)
 
     def reconstruct(self, xs: torch.Tensor) -> torch.Tensor:
@@ -85,7 +111,7 @@ class VAE(torch.nn.Module):
         return recon
 
     def sample(self) -> torch.Tensor:
-        """Samples random points from original space"""
+        """Samples random points `xs` from original space."""
         with torch.no_grad():
             zs = self.prior_dist().sample()
             recon_dist = self.lik_dist(zs)
