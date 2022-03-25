@@ -23,9 +23,12 @@ class VAE_MNIST(VAE):
         self.fc4 = nn.Linear(400, 784)  #  mean of likelihood p(x | z)
         self.lik_std = torch.tensor(
             lik_std
-        )  # std of likelihood p(x | z) is a hyperparameter
+        )  # std of likelihood p(x | z) is a 
+
+        self.device = 'cpu' # update device on forward pass
 
     def encode(self, xs: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        self.device = xs.device
         h1 = F.relu(self.fc1(xs))
         return self.fc21(h1), torch.diag_embed(torch.exp(self.fc22(h1)))
 
@@ -35,5 +38,8 @@ class VAE_MNIST(VAE):
         return torch.sigmoid(self.fc4(h3)), std
 
     def prior_dist(self) -> dist.Distribution:
-        return dist.multivariate_normal.MultivariateNormal(torch.zeros(20), torch.eye(20))
+        return dist.multivariate_normal.MultivariateNormal(
+            torch.zeros(20, device=self.device), 
+            torch.eye(20, device=self.device)
+        )
 
