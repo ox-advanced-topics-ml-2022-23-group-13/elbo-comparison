@@ -23,7 +23,7 @@ class VAE_MNIST(VAE):
         self.fc4 = nn.Linear(400, 784)  #  mean of likelihood p(x | z)
         self.lik_std = torch.tensor(
             lik_std
-        )  # std of likelihood p(x | z) is a 
+        )  # std of likelihood p(x | z) is a hyperparameter
 
         self.device = 'cpu' # update device on forward pass
 
