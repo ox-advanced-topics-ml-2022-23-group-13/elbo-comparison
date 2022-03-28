@@ -1,6 +1,4 @@
 import torch
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
 from torch import nn
 import torch.nn.functional as F
 import torch.distributions as dist
@@ -8,9 +6,9 @@ import torch.distributions as dist
 from comparison.model import VAE
 
 
-class VAE_MNIST(VAE):
+class VAE_Toy(VAE):
     """
-    A reimplementation of code from ATML Practical 3
+    An implementation of the toy model from the paper.
     """
 
     def __init__(self, D):

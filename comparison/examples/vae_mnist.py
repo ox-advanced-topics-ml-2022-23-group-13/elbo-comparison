@@ -1,6 +1,4 @@
 import torch
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
 from torch import nn
 import torch.nn.functional as F
 import torch.distributions as dist
