@@ -14,7 +14,7 @@ class VAE_MNIST(VAE):
     """
 
     def __init__(self, lik_std=0.1):
-        super().__init__(dist.multivariate_normal.MultivariateNormal, dist.multivariate_normal.MultivariateNormal)
+        super().__init__(dist.normal.Normal, dist.normal.Normal)
 
         self.fc1 = nn.Linear(784, 400)
         self.fc21 = nn.Linear(400, 20)  # mean of variational posterior q(z | x)
@@ -30,16 +30,19 @@ class VAE_MNIST(VAE):
     def encode(self, xs: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         self.device = xs.device
         h1 = F.relu(self.fc1(xs))
-        return self.fc21(h1), torch.diag_embed(torch.exp(self.fc22(h1)))
+        mu = self.fc21(h1)
+        std = torch.exp(self.fc22(h1))
+        return mu, std
 
     def decode(self, zs: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         h3 = F.relu(self.fc3(zs))
-        std = torch.eye(n = 784, device=zs.device) * self.lik_std.to(zs.device)
-        return torch.sigmoid(self.fc4(h3)), std
+        mu = torch.sigmoid(self.fc4(h3))
+        std = torch.ones(784, device=zs.device) * self.lik_std.to(zs.device)
+        return mu, std
 
     def prior_dist(self) -> dist.Distribution:
-        return dist.multivariate_normal.MultivariateNormal(
+        return dist.normal.Normal(
             torch.zeros(20, device=self.device), 
-            torch.eye(20, device=self.device)
+            torch.ones(20, device=self.device)
         )
 

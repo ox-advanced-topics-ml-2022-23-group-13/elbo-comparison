@@ -10,10 +10,13 @@ BATCH_DIM = 2 # Also known as "N", sampling over multiple data points `xs`
 
 
 def var_log_evidence(res: VAEForwardResult) -> torch.Tensor:
+    def log_prob_sum(dist, vals, samples):
+        r = dist.log_prob(vals).view(*vals.shape[:3 if samples else 1], -1).sum(-1)
+        return r
     return (
-        res.prior_dist.log_prob(res.zs)
-        + res.lik_dist.log_prob(res.xs)
-        - res.post_dist.log_prob(res.zs)
+        log_prob_sum(res.prior_dist, res.zs, samples=True)
+        + log_prob_sum(res.lik_dist, res.xs, samples=False)
+        - log_prob_sum(res.post_dist, res.zs, samples=True)
     )
 
 def logmeanexp(xs: torch.Tensor, dim: int) -> torch.Tensor:
