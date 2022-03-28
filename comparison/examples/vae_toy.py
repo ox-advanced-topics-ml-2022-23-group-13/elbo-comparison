@@ -33,7 +33,7 @@ class VAE_Toy(VAE):
 
     def prior_dist(self) -> dist.Distribution:
         return dist.normal.Normal(
-            torch.zeros(self.mu, device=self.device), 
+            self.mu,
             torch.ones(self.D, device=self.device)
         )
 
