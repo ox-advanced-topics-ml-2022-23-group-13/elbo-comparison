@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Iterator, Type
 import torch
 from torch import distributions as dist
 
@@ -58,6 +58,12 @@ class VAE(torch.nn.Module):
         Input Shape: `(B, *latent_shape)`,
         Output: `((B, *param.shape) for param in lik_params)`
         """
+        raise NotImplementedError
+
+    def encode_params(self) -> Iterator[torch.nn.Parameter]:
+        raise NotImplementedError
+
+    def decode_params(self) -> Iterator[torch.nn.Parameter]:
         raise NotImplementedError
 
     def prior_dist(self) -> dist.Distribution:

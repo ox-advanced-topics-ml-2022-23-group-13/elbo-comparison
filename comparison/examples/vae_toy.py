@@ -37,3 +37,9 @@ class VAE_Toy(VAE):
             torch.ones(self.D, device=self.device)
         )
 
+    def encode_params(self):
+        yield from self.inf_layer.parameters()
+
+    def decode_params(self):
+        yield self.mu
+

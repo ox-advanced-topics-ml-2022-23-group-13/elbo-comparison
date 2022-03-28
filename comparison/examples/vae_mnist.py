@@ -44,3 +44,12 @@ class VAE_MNIST(VAE):
             torch.ones(20, device=self.device)
         )
 
+    def encode_params(self):
+        yield from self.fc1.parameters()
+        yield from self.fc21.parameters()
+        yield from self.fc22.parameters()
+
+    def decode_params(self):
+        yield from self.fc3.parameters()
+        yield from self.fc4.parameters()
+
