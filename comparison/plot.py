@@ -92,11 +92,11 @@ def plot_smoothed(
     Plot data with a Gaussian filter applied. 
     """
     
-    if sigma == None:
-        sigma = (max(xs) - min(xs)) / 10
     if ys == None:
         ys = xs
         xs = torch.arange(len(xs))
+    if sigma == None:
+        sigma = (max(xs) - min(xs)) / 10
         
     ls = torch.linspace(min(xs), max(xs), 100)
     ys_, eps_ = gauss_filter_and_std(ls, xs, ys, sigma, fit_sigma)

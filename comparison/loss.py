@@ -6,7 +6,8 @@ from comparison.model import VAEForwardResult
 
 M_SAMPLE_DIM = 0 # Resampling for the same `x` to reduce variance
 K_SAMPLE_DIM = 1 # Resampling for the same `x` tighten bound for IWAE
-BATCH_DIM = 2 # Also known as "N", sampling over multiple data points `xs`
+
+BATCH_DIM = 0 # Also known as "N", sampling over multiple data points `xs`
 
 
 def var_log_evidence(res: VAEForwardResult) -> torch.Tensor:
@@ -26,8 +27,6 @@ def logmeanexp(xs: torch.Tensor, dim: int) -> torch.Tensor:
 def ELBO(res: VAEForwardResult) -> torch.Tensor:
     """The original ELBO definition."""
     return var_log_evidence(res).mean(
-        dim=BATCH_DIM
-    ).mean(
         dim=K_SAMPLE_DIM
     ).mean(
         dim=M_SAMPLE_DIM
@@ -46,8 +45,6 @@ def IWAE(res: VAEForwardResult) -> torch.Tensor:
         dim=K_SAMPLE_DIM
     ).mean(
         dim=M_SAMPLE_DIM
-    ).mean(
-        dim=BATCH_DIM - 2
     )
 
 
@@ -62,7 +59,7 @@ def CIWAE(res: VAEForwardResult, beta: float) -> torch.Tensor:
         beta * ev.mean(dim=K_SAMPLE_DIM)
         + (1 - beta) * logmeanexp(ev, dim=K_SAMPLE_DIM)
     )
-    return comb.mean(dim=M_SAMPLE_DIM).mean(dim=BATCH_DIM - 2)
+    return comb.mean(dim=M_SAMPLE_DIM)
 
 
 def PIWAE(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
@@ -81,8 +78,6 @@ def PIWAE(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
         dim=K_SAMPLE_DIM
     ).mean(
         dim=M_SAMPLE_DIM
-    ).mean(
-        dim=BATCH_DIM - 2
     )
 
     iwae = logmeanexp(
@@ -90,9 +85,25 @@ def PIWAE(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
         dim=K_SAMPLE_DIM
     ).mean(
         dim=M_SAMPLE_DIM
-    ).mean(
-        dim=BATCH_DIM - 2
     )
 
     return miwae, iwae
+
+
+
+def ELBO_loss(res: VAEForwardResult) -> torch.Tensor:
+    return ELBO(res).mean(dim=BATCH_DIM)
+
+
+def IWAE_loss(res: VAEForwardResult) -> torch.Tensor:
+    return IWAE(res).mean(dim=BATCH_DIM)
+
+
+def CIWAE_loss(res: VAEForwardResult) -> torch.Tensor:
+    return CIWAE(res).mean(dim=BATCH_DIM)
+
+
+def PIWAE_loss(res: VAEForwardResult) -> torch.Tensor:
+    miwae, iwae = PIWAE(res)
+    return miwae.mean(dim=BATCH_DIM), iwae.mean(dim=BATCH_DIM)
 
