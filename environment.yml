@@ -2,10 +2,11 @@ name: elbo-comparison
 channels:
   - defaults
 dependencies:
-  - torchvision
-  - pytorch
+  - tqdm
   - jupyter
   - notebook
-  - tqdm
   - matplotlib
-prefix: /home/andy/anaconda3/envs/elbo-comparison
+  - pytorch
+  - torchvision
+  - cudatoolkit=10.2
+prefix: /home/arend/miniconda3/envs/elbo-comparison
