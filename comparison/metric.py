@@ -1,7 +1,7 @@
 from typing import Iterator
 import torch
 from comparison.model import VAE
-from comparison.loss import IWAE
+from comparison.loss import IWAE, var_log_evidence
 from comparison.loss import IWAE_loss, CIWAE_loss, PIWAE_loss
 
 
@@ -97,3 +97,19 @@ def sample_dsnr(
     return dsnr.mean()
 
     
+def sample_ess(
+    model: VAE,
+    xs: torch.Tensor,
+    T: int
+) -> torch.Tensor:
+    vae_res = model(xs, M=T)
+    log_weight = var_log_evidence(vae_res).squeeze(1)
+    norm_log_weight = log_weight - torch.mean(log_weight, dim=0)
+    
+    effective_sample_sizes = torch.exp(
+                                 torch.logsumexp(norm_log_weight, dim=0)*2 
+                               - torch.logsumexp(norm_log_weight*2, dim=0)
+                             )
+    
+    return effective_sample_sizes/T
+
