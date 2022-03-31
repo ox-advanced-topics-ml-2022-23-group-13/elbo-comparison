@@ -2,23 +2,35 @@ from typing import Iterator
 import torch
 from comparison.model import VAE
 from comparison.loss import IWAE
+from comparison.loss import IWAE_loss, CIWAE_loss, PIWAE_loss
+
+
+def IWAE_metric(model: VAE, xs: torch.Tensor, M: int = 1, K: int = 64) -> torch.Tensor:
+    vae_res = model(xs, K, M)
+    return IWAE_loss(vae_res)
+
+def CIWAE_metric(model, xs, beta: float = 0.5) -> torch.Tensor:
+    M, K = 1, 64
+    vae_res = model(xs, K, M)
+    return CIWAE_loss(vae_res, beta)
+
+def PIWAE_metric(model, xs, M = 1, K = 64) -> tuple[torch.Tensor, torch.Tensor]:
+    M, K = 1, 64
+    vae_res = model(xs, K, M)
+    return PIWAE_loss(vae_res)
 
 def IWAE_64(model: VAE, xs: torch.Tensor) -> torch.Tensor:
-    with torch.no_grad():
-        vae_res = model(xs, K=64)
-        loss = IWAE(vae_res)
-        return loss
+    return IWAE_metric(model, xs, M=1, K=64)
 
 def log_px(model: VAE, xs: torch.Tensor) -> torch.Tensor:
-    with torch.no_grad():
-        vae_res = model(xs, K=5000)
-        loss = IWAE(vae_res)
-        return loss
+    vae_res = model(xs, K=5000)
+    loss = IWAE(vae_res)
+    return loss
 
 def sample_grads(
     model: VAE, 
     xss: Iterator[torch.Tensor], 
-    params: tuple[torch.nn.Parameter, ...], 
+    params: tuple[torch.nn.parameter.Parameter, ...], 
     M: int, 
     K: int, 
     loss_fn,
@@ -54,7 +66,7 @@ def norm_over(xs: torch.Tensor, dim: int = None) -> torch.Tensor:
 def sample_snr(
     model: VAE, 
     xss: Iterator[torch.Tensor], 
-    params:  tuple[torch.nn.Parameter, ...], 
+    params:  tuple[torch.nn.parameter.Parameter, ...], 
     M: int, 
     K: int, 
     loss_fn
@@ -69,7 +81,7 @@ def sample_snr(
 def sample_dsnr(
     model: VAE, 
     xss: Iterator[torch.Tensor], 
-    params:  tuple[torch.nn.Parameter, ...], 
+    params:  tuple[torch.nn.parameter.Parameter, ...], 
     M: int, 
     K: int, 
     loss_fn
