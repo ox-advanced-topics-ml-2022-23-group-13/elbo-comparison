@@ -26,11 +26,14 @@ def sample_grads(
 ) -> tuple[torch.Tensor, ...]:
     grads = list(None for p in params)
 
+    for p in params:
+        p.grad = None
+
     for xs in xss:
         for idx in range(xs.size(0)):
             x = xs[idx:idx+1]
             vae_res = model(x, M=M, K=K)
-            loss = loss_fn(vae_res)
+            loss = -loss_fn(vae_res)
 
             loss.backward()
 
@@ -60,11 +63,7 @@ def sample_snr(
     loss_fn
 ) -> torch.Tensor:
     grads = sample_grads(model, xss, params, M, K, loss_fn, reshape=True)
-
-    exp = grads.mean(dim=0)
-    std = torch.sqrt(((grads - exp) ** 2).mean(dim=0))
-    snr = exp / std
-    return norm_over(snr)
+    return torch.abs(grads.mean(dim=0) / grads.std(dim=0))
     
 def sample_dsnr(
     model: VAE, 

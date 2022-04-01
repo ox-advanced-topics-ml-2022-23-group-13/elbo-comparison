@@ -86,6 +86,7 @@ def plot_smoothed(
     ys: torch.Tensor = None, 
     sigma: float = None, 
     fit_sigma = False,
+    ax=None,
     **kargs
 ) -> torch.Tensor:
     """
@@ -105,6 +106,15 @@ def plot_smoothed(
     
     alpha = kargs["alpha"] if "alpha" in kargs else 1.
     
-    plt.plot(ls, ys_, **kargs)
-    plt.fill_between(ls, lows, highs, alpha=alpha*0.3, **kargs)
+    ax.plot(ls, ys_, **kargs)
+    ax.fill_between(ls, lows, highs, alpha=alpha*0.3, **kargs)
 
+def plot_density(xs: torch.Tensor, sigma: float, ax=None, **kargs):
+
+    ls = torch.linspace(min(xs), max(xs), 100)
+    dns = gauss_density(ls, xs, sigma)
+
+    if ax == None:
+        return plt.fill_between(ls, torch.zeros_like(dns), dns, **kargs)
+    else:
+        return ax.fill_between(ls, torch.zeros_like(dns), dns, **kargs)

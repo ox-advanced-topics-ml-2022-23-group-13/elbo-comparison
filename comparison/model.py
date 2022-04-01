@@ -89,7 +89,7 @@ class VAE(torch.nn.Module):
         return self.lik_class(*lik_params)
 
     def forward(self, xs: torch.Tensor, M=1, K=1) -> dist.Distribution:
-        """Given input `xs`, returns the function p(x|z)"""
+        """Given input `xs`, returns data required for variational optimisation"""
         post_dist = self.post_dist(xs)
         zs = post_dist.rsample(torch.Size([M, K]))
         lik_dist = self.lik_dist(zs)
