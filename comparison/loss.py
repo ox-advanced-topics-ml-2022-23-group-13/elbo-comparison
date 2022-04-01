@@ -54,11 +54,11 @@ def CIWAE(res: VAEForwardResult, beta: float) -> torch.Tensor:
     Linearly interpolate between original ELBO and IWAE.
     `beta=1` is ELBO, `beta=0` is IWAE.
     """
-    beta = torch.tensor(beta)
+    beta_tensor = torch.tensor(beta)
     ev = var_log_evidence(res)
     comb = (
-        beta * ev.mean(dim=K_SAMPLE_DIM)
-        + (1 - beta) * logmeanexp(ev, dim=K_SAMPLE_DIM)
+        beta_tensor * ev.mean(dim=K_SAMPLE_DIM)
+        + (1 - beta_tensor) * logmeanexp(ev, dim=K_SAMPLE_DIM)
     )
     return comb.mean(dim=M_SAMPLE_DIM)
 
@@ -100,11 +100,11 @@ def IWAE_loss(res: VAEForwardResult) -> torch.Tensor:
     return IWAE(res).mean(dim=BATCH_DIM)
 
 
-def CIWAE_loss(res: VAEForwardResult) -> torch.Tensor:
-    return CIWAE(res).mean(dim=BATCH_DIM)
+def CIWAE_loss(res: VAEForwardResult, beta: float) -> torch.Tensor:
+    return CIWAE(res, beta).mean(dim=BATCH_DIM)
 
 
-def PIWAE_loss(res: VAEForwardResult) -> torch.Tensor:
+def PIWAE_loss(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
     miwae, iwae = PIWAE(res)
     return miwae.mean(dim=BATCH_DIM), iwae.mean(dim=BATCH_DIM)
 

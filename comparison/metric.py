@@ -1,24 +1,36 @@
 from typing import Iterator
 import torch
 from comparison.model import VAE
-from comparison.loss import IWAE
+from comparison.loss import IWAE, var_log_evidence
+from comparison.loss import IWAE_loss, CIWAE_loss, PIWAE_loss
+
+
+def IWAE_metric(model: VAE, xs: torch.Tensor, M: int = 1, K: int = 64) -> torch.Tensor:
+    vae_res = model(xs, K, M)
+    return IWAE_loss(vae_res)
+
+def CIWAE_metric(model, xs, beta: float = 0.5) -> torch.Tensor:
+    M, K = 1, 64
+    vae_res = model(xs, K, M)
+    return CIWAE_loss(vae_res, beta)
+
+def PIWAE_metric(model, xs, M = 1, K = 64) -> tuple[torch.Tensor, torch.Tensor]:
+    M, K = 1, 64
+    vae_res = model(xs, K, M)
+    return PIWAE_loss(vae_res)
 
 def IWAE_64(model: VAE, xs: torch.Tensor) -> torch.Tensor:
-    with torch.zero_grad():
-        vae_res = model(xs, K=64)
-        loss = IWAE(vae_res)
-        return loss
+    return IWAE_metric(model, xs, M=1, K=64)
 
 def log_px(model: VAE, xs: torch.Tensor) -> torch.Tensor:
-    with torch.zero_grad():
-        vae_res = model(xs, K=5000)
-        loss = IWAE(vae_res)
-        return loss
+    vae_res = model(xs, K=5000)
+    loss = IWAE(vae_res)
+    return loss
 
 def sample_grads(
     model: VAE, 
     xss: Iterator[torch.Tensor], 
-    params: tuple[torch.nn.Parameter, ...], 
+    params: tuple[torch.nn.parameter.Parameter, ...], 
     M: int, 
     K: int, 
     loss_fn,
@@ -57,7 +69,7 @@ def norm_over(xs: torch.Tensor, dim: int = None) -> torch.Tensor:
 def sample_snr(
     model: VAE, 
     xss: Iterator[torch.Tensor], 
-    params:  tuple[torch.nn.Parameter, ...], 
+    params:  tuple[torch.nn.parameter.Parameter, ...], 
     M: int, 
     K: int, 
     loss_fn
@@ -68,7 +80,7 @@ def sample_snr(
 def sample_dsnr(
     model: VAE, 
     xss: Iterator[torch.Tensor], 
-    params:  tuple[torch.nn.Parameter, ...], 
+    params:  tuple[torch.nn.parameter.Parameter, ...], 
     M: int, 
     K: int, 
     loss_fn
@@ -84,3 +96,19 @@ def sample_dsnr(
     return dsnr.mean()
 
     
+def sample_ess(
+    model: VAE,
+    xs: torch.Tensor,
+    T: int
+) -> torch.Tensor:
+    vae_res = model(xs, M=T)
+    log_weight = var_log_evidence(vae_res).squeeze(1)
+    norm_log_weight = log_weight - torch.mean(log_weight, dim=0)
+    
+    effective_sample_sizes = torch.exp(
+                                 torch.logsumexp(norm_log_weight, dim=0)*2 
+                               - torch.logsumexp(norm_log_weight*2, dim=0)
+                             )
+    
+    return effective_sample_sizes/T
+
