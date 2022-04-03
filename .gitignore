@@ -2,5 +2,6 @@
 */**/__pycache__
 */**/.ipynb_checkpoints
 */**/_mnist
+*/**/_modeldata
 
 */**/notebooks/toy/*.dat
