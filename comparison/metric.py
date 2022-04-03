@@ -42,21 +42,20 @@ def sample_grads(
         p.grad = None
 
     for xs in xss:
-        for idx in range(xs.size(0)):
-            x = xs[idx:idx+1]
-            vae_res = model(x, M=M, K=K)
-            loss = -loss_fn(vae_res)
+        # for idx in range(xs.size(0)):
+        vae_res = model(xs, M=M, K=K)
+        loss = -loss_fn(vae_res)
 
-            loss.backward()
+        loss.backward()
 
-            with torch.no_grad():
-                for idx, p in enumerate(params):
-                    grad = torch.unsqueeze(p.grad, dim=0)
-                    if grads[idx] == None:
-                        grads[idx] = grad
-                    else:
-                        grads[idx] = torch.cat([grads[idx], grad], dim=0)
-                    p.grad = None
+        with torch.no_grad():
+            for idx, p in enumerate(params):
+                grad = torch.unsqueeze(p.grad, dim=0)
+                if grads[idx] == None:
+                    grads[idx] = grad
+                else:
+                    grads[idx] = torch.cat([grads[idx], grad], dim=0)
+                p.grad = None
 
     if reshape:
         return torch.cat(tuple(grad.flatten(1, -1) for grad in grads), dim=1)
