@@ -23,9 +23,7 @@ def IWAE_64(model: VAE, xs: torch.Tensor) -> torch.Tensor:
     return IWAE_metric(model, xs, M=1, K=64)
 
 def log_px(model: VAE, xs: torch.Tensor) -> torch.Tensor:
-    vae_res = model(xs, K=5000)
-    loss = IWAE(vae_res)
-    return loss
+    return IWAE_metric(model, xs, M=1, K=5000)
 
 def sample_grads(
     model: VAE, 
