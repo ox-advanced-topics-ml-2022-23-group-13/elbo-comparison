@@ -12,13 +12,15 @@ class VAE_MNIST(VAE):
     """
 
     def __init__(self, lik_std=0.1):
-        super().__init__(dist.normal.Normal, dist.normal.Normal)
+        super().__init__(dist.normal.Normal, dist.bernoulli.Bernoulli)
 
-        self.fc1 = nn.Linear(784, 400)
-        self.fc21 = nn.Linear(400, 20)  # mean of variational posterior q(z | x)
-        self.fc22 = nn.Linear(400, 20)  # std of variational posterior q(z | x)
-        self.fc3 = nn.Linear(20, 400)
-        self.fc4 = nn.Linear(400, 784)  #  mean of likelihood p(x | z)
+        self.fc1 = nn.Linear(784, 200)
+        self.fc2 = nn.Linear(200, 200)
+        self.fc31 = nn.Linear(200, 20)  # mean of variational posterior q(z | x)
+        self.fc32 = nn.Linear(200, 20)  # std of variational posterior q(z | x)
+        self.fc4 = nn.Linear(20, 200)
+        self.fc5 = nn.Linear(200, 200)
+        self.fc6 = nn.Linear(200, 784)  #  mean of likelihood p(x | z)
         self.lik_std = torch.tensor(
             lik_std
         )  # std of likelihood p(x | z) is a hyperparameter
@@ -27,16 +29,17 @@ class VAE_MNIST(VAE):
 
     def encode(self, xs: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         self.device = xs.device
-        h1 = F.relu(self.fc1(xs))
-        mu = self.fc21(h1)
-        std = torch.exp(self.fc22(h1))
+        h1 = torch.tanh(self.fc1(xs))
+        h2 = torch.tanh(self.fc2(h1))
+        mu = self.fc31(h2)
+        std = torch.exp(self.fc32(h2))
         return mu, std
 
     def decode(self, zs: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        h3 = F.relu(self.fc3(zs))
-        mu = torch.sigmoid(self.fc4(h3))
-        std = torch.ones(784, device=zs.device) * self.lik_std.to(zs.device)
-        return mu, std
+        h3 = torch.tanh(self.fc4(zs))
+        h4 = torch.tanh(self.fc5(h3))
+        mu = torch.sigmoid(self.fc6(h3))
+        return mu,
 
     def prior_dist(self) -> dist.Distribution:
         return dist.normal.Normal(
@@ -46,10 +49,12 @@ class VAE_MNIST(VAE):
 
     def encode_params(self):
         yield from self.fc1.parameters()
-        yield from self.fc21.parameters()
-        yield from self.fc22.parameters()
+        yield from self.fc2.parameters()
+        yield from self.fc31.parameters()
+        yield from self.fc32.parameters()
 
     def decode_params(self):
-        yield from self.fc3.parameters()
         yield from self.fc4.parameters()
+        yield from self.fc5.parameters()
+        yield from self.fc6.parameters()
 
