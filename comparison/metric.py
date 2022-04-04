@@ -100,7 +100,6 @@ def sample_ess(
 ) -> torch.Tensor:
     vae_res = model(xs, M=T)
     log_weight = var_log_evidence(vae_res).squeeze(1)
-    #norm_log_weight = log_weight - torch.mean(log_weight, dim=0)
     
     effective_sample_sizes = torch.exp(
                                  torch.logsumexp(log_weight, dim=0)*2 
