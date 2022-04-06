@@ -13,8 +13,9 @@ BATCH_DIM = 0 # Also known as "N", sampling over multiple data points `xs`
 def var_log_evidence(res: VAEForwardResult) -> torch.Tensor:
     def log_prob_sum(dist, vals):
         log_probs = dist.log_prob(vals)
-        r = log_probs.view(*log_probs.shape[:3], -1).sum(-1)
+        r = log_probs.sum(-1) 
         return r
+    
     return (
         log_prob_sum(res.prior_dist, res.zs)
         + log_prob_sum(res.lik_dist, res.xs)

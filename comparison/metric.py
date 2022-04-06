@@ -20,10 +20,12 @@ def PIWAE_metric(model, xs, M = 1, K = 64) -> tuple[torch.Tensor, torch.Tensor]:
     return PIWAE_loss(vae_res)
 
 def IWAE_64(model: VAE, xs: torch.Tensor) -> torch.Tensor:
-    return IWAE_metric(model, xs, M=1, K=64)
+    vae_res = model(xs, 64, 1)
+    return IWAE(vae_res)
 
 def log_px(model: VAE, xs: torch.Tensor) -> torch.Tensor:
-    return IWAE_metric(model, xs, M=1, K=5000)
+    vae_res = model(xs, 5000, 1)
+    return IWAE(vae_res)
 
 def sample_grads(
     model: VAE, 

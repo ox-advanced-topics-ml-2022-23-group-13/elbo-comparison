@@ -16,9 +16,9 @@ class VAE_MNIST(VAE):
 
         self.fc1 = nn.Linear(784, 200)
         self.fc2 = nn.Linear(200, 200)
-        self.fc31 = nn.Linear(200, 20)  # mean of variational posterior q(z | x)
-        self.fc32 = nn.Linear(200, 20)  # std of variational posterior q(z | x)
-        self.fc4 = nn.Linear(20, 200)
+        self.fc31 = nn.Linear(200, 50)  # mean of variational posterior q(z | x)
+        self.fc32 = nn.Linear(200, 50)  # std of variational posterior q(z | x)
+        self.fc4 = nn.Linear(50, 200)
         self.fc5 = nn.Linear(200, 200)
         self.fc6 = nn.Linear(200, 784)  #  mean of likelihood p(x | z)
         self.lik_std = torch.tensor(
@@ -43,8 +43,8 @@ class VAE_MNIST(VAE):
 
     def prior_dist(self) -> dist.Distribution:
         return dist.normal.Normal(
-            torch.zeros(20, device=self.device), 
-            torch.ones(20, device=self.device)
+            torch.zeros(50, device=self.device), 
+            torch.ones(50, device=self.device)
         )
 
     def encode_params(self):
