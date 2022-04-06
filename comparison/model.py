@@ -60,10 +60,10 @@ class VAE(torch.nn.Module):
         """
         raise NotImplementedError
 
-    def encode_params(self) -> Iterator[torch.nn.Parameter]:
+    def encode_params(self) -> Iterator[torch.nn.parameter.Parameter]:
         raise NotImplementedError
 
-    def decode_params(self) -> Iterator[torch.nn.Parameter]:
+    def decode_params(self) -> Iterator[torch.nn.parameter.Parameter]:
         raise NotImplementedError
 
     def prior_dist(self) -> dist.Distribution:
@@ -88,7 +88,7 @@ class VAE(torch.nn.Module):
         lik_params = self.decode(zs)
         return self.lik_class(*lik_params)
 
-    def forward(self, xs: torch.Tensor, M=1, K=1) -> dist.Distribution:
+    def forward(self, xs: torch.Tensor, M=1, K=1) -> VAEForwardResult:
         """Given input `xs`, returns data required for variational optimisation"""
         post_dist = self.post_dist(xs)
         zs = post_dist.rsample(torch.Size([M, K]))
