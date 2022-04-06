@@ -95,8 +95,7 @@ def PIWAE(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
 def DREG(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
     """
         TODO:
-        Actually test this am sure I've got a dim wrong somewhere
-        Implement it in the same way as PIWAE on the training side
+        Testing on output
     """
 
     def log_prob(dist, vals):
@@ -105,6 +104,13 @@ def DREG(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
         return r  
 
     ev = var_log_evidence(res)
+
+    iwae = logmeanexp(
+        ev.view(1, -1, *ev.shape[2:]),
+        dim=K_SAMPLE_DIM
+    ).mean(
+        dim=M_SAMPLE_DIM
+    )
 
     """
         stop_grad_log_q_z_x should only be a function of z and not of the distribution
@@ -129,11 +135,9 @@ def DREG(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
     # these are a function of nothing
     importance_weights = (stop_grad_log_w - torch.logsumexp(stop_grad_log_w,dim=0)).detach().exp()
 
-    infer_loss = - (importance_weights.pow(2) * stop_grad_log_w).sum(0).mean()
+    infer_loss = (importance_weights.pow(2) * stop_grad_log_w).sum(K_SAMPLE_DIM)
 
-    return ev, infer_loss
-
-
+    return iwae, torch.flatten(infer_loss)
 
 def ELBO_loss(res: VAEForwardResult) -> torch.Tensor:
     return ELBO(res).mean(dim=BATCH_DIM)
@@ -151,3 +155,6 @@ def PIWAE_loss(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
     miwae, iwae = PIWAE(res)
     return miwae.mean(dim=BATCH_DIM), iwae.mean(dim=BATCH_DIM)
 
+def DREG_loss(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
+    iwae, infer_loss = DREG(res)
+    return iwae.mean(dim=BATCH_DIM), infer_loss.mean(dim=BATCH_DIM)
