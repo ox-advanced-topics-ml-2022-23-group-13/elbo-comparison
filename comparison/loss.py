@@ -93,11 +93,6 @@ def PIWAE(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
 
 
 def DREG(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
-    """
-        TODO:
-        Testing on output
-    """
-
     def log_prob(dist, vals):
         log_probs = dist.log_prob(vals)
         r = log_probs.sum(-1) 
@@ -131,13 +126,13 @@ def DREG(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
         - stop_grad_log_q_z_x
         ])
     
-
     # these are a function of nothing
     importance_weights = (stop_grad_log_w - torch.logsumexp(stop_grad_log_w,dim=0)).detach().exp()
 
-    infer_loss = (importance_weights.pow(2) * stop_grad_log_w).sum(K_SAMPLE_DIM)
+    infer_loss = torch.flatten((importance_weights.pow(2) * stop_grad_log_w).sum(K_SAMPLE_DIM))
 
-    return iwae, torch.flatten(infer_loss)
+    return infer_loss, iwae
+
 
 def ELBO_loss(res: VAEForwardResult) -> torch.Tensor:
     return ELBO(res).mean(dim=BATCH_DIM)
