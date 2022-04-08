@@ -6,25 +6,23 @@ from comparison.loss import IWAE_loss, CIWAE_loss, PIWAE_loss
 
 
 def IWAE_metric(model: VAE, xs: torch.Tensor, M: int = 1, K: int = 64) -> torch.Tensor:
-    vae_res = model(xs, K, M)
+    vae_res = model(xs, M=M, K=K)
     return IWAE_loss(vae_res)
 
 def CIWAE_metric(model, xs, beta: float = 0.5) -> torch.Tensor:
-    M, K = 1, 64
-    vae_res = model(xs, K, M)
+    vae_res = model(xs, M=M, K=K)
     return CIWAE_loss(vae_res, beta)
 
 def PIWAE_metric(model, xs, M = 1, K = 64) -> tuple[torch.Tensor, torch.Tensor]:
-    M, K = 1, 64
-    vae_res = model(xs, K, M)
+    vae_res = model(xs, M=M, K=K)
     return PIWAE_loss(vae_res)
 
 def IWAE_64(model: VAE, xs: torch.Tensor) -> torch.Tensor:
-    vae_res = model(xs, 64, 1)
+    vae_res = model(xs, M=1, K=64)
     return IWAE(vae_res)
 
 def log_px(model: VAE, xs: torch.Tensor) -> torch.Tensor:
-    vae_res = model(xs, 5000, 1)
+    vae_res = model(xs, M=1, K=5000)
     return IWAE(vae_res)
 
 def sample_grads(
