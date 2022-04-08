@@ -149,9 +149,10 @@ def DREG2(res: VAEForwardResult) -> torch.Tensor:
     ])
 
     # these are a function of nothing
-    importance_weights = (log_hat_w - torch.logsumexp(log_hat_w,dim=0)).detach().exp()
+    importance_weights = (log_hat_w - torch.logsumexp(log_hat_w,dim=1)).detach().exp()
 
-
+    #print(importance_weights.shape)
+    #print(importance_weights)
     # Generation
 
     tilde_zs = res.zs.detach()

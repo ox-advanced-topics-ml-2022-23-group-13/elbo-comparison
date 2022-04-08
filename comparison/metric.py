@@ -6,17 +6,6 @@ from comparison.loss import IWAE_loss, CIWAE_loss, PIWAE_loss
 
 
 def IWAE_metric(model: VAE, xs: torch.Tensor, M: int = 1, K: int = 64) -> torch.Tensor:
-<<<<<<< Updated upstream
-    vae_res = model(xs, M=M, K=K)
-    return IWAE_loss(vae_res)
-
-def CIWAE_metric(model, xs, beta: float = 0.5) -> torch.Tensor:
-    vae_res = model(xs, M=M, K=K)
-    return CIWAE_loss(vae_res, beta)
-
-def PIWAE_metric(model, xs, M = 1, K = 64) -> tuple[torch.Tensor, torch.Tensor]:
-    vae_res = model(xs, M=M, K=K)
-=======
     vae_res = model(xs, M, K)
     return IWAE_loss(vae_res)
 
@@ -28,7 +17,6 @@ def CIWAE_metric(model, xs, beta: float = 0.5) -> torch.Tensor:
 def PIWAE_metric(model, xs, M = 1, K = 64) -> tuple[torch.Tensor, torch.Tensor]:
     M, K = 1, 64
     vae_res = model(xs, M, K)
->>>>>>> Stashed changes
     return PIWAE_loss(vae_res)
 
 def IWAE_64(model: VAE, xs: torch.Tensor) -> torch.Tensor:
