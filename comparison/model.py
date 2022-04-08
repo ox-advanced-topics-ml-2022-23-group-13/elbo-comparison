@@ -20,12 +20,14 @@ class VAEForwardResult:
         lik_dist: dist.Distribution,
         xs: torch.Tensor,
         zs: torch.Tensor,
+        model
     ):
         self.prior_dist = prior_dist
         self.post_dist = post_dist
         self.lik_dist = lik_dist
         self.xs = xs
         self.zs = zs
+        self.model = model
 
 
 class VAE(torch.nn.Module):
@@ -99,6 +101,7 @@ class VAE(torch.nn.Module):
             lik_dist=lik_dist,
             xs=xs,
             zs=zs,
+            model = self
         )
 
     @staticmethod

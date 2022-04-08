@@ -5,3 +5,5 @@
 */**/_modeldata
 
 */**/notebooks/toy/*.dat
+*/**/examples/toy/*.dat
+*/**/examples/toy/iwae/*.dat

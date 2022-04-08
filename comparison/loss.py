@@ -3,6 +3,7 @@ import torch
 import math
 
 from comparison.model import VAEForwardResult
+from comparison.examples.vae_mnist import VAE_MNIST
 
 
 M_SAMPLE_DIM = 0 # Resampling for the same `x` to reduce variance
@@ -126,6 +127,47 @@ def DREG(res: VAEForwardResult) -> torch.Tensor:
         M_SAMPLE_DIM
     )
 
+def DREG2(res: VAEForwardResult) -> torch.Tensor:
+    model = res.model
+
+    def log_prob(dist, vals):
+        log_probs = dist.log_prob(vals)
+        r = log_probs.sum(-1) 
+        return r  
+
+    # Inference
+
+    lp_full = log_prob(res.post_dist, res.zs)
+    lp_partial = log_prob(res.post_dist, res.zs.detach())
+    log_hat_q_z_x = lp_full + (lp_partial.detach() - lp_partial)
+
+
+    log_hat_w = sum([
+        log_prob(res.prior_dist, res.zs),
+    + log_prob(res.lik_dist, res.xs),
+    - log_hat_q_z_x
+    ])
+
+    # these are a function of nothing
+    importance_weights = (log_hat_w - torch.logsumexp(log_hat_w,dim=0)).detach().exp()
+
+
+    # Generation
+
+    tilde_zs = res.zs.detach()
+
+    log_tilde_p_zs = log_prob(model.prior_dist(), tilde_zs)
+    log_tilde_p_x_zs = log_prob(model.lik_dist(tilde_zs), res.xs)
+
+    log_tilde_p_x_and_zs = log_tilde_p_zs + log_tilde_p_x_zs
+
+    # putting it all together    
+    
+    loss = torch.sum(importance_weights * log_tilde_p_x_and_zs + importance_weights.pow(2) * log_hat_w, dim = K_SAMPLE_DIM).mean(dim=M_SAMPLE_DIM)
+    
+    return torch.squeeze(loss)
+
+
 
 def ELBO_loss(res: VAEForwardResult) -> torch.Tensor:
     return ELBO(res).mean(dim=BATCH_DIM)
@@ -144,5 +186,5 @@ def PIWAE_loss(res: VAEForwardResult) -> tuple[torch.Tensor, torch.Tensor]:
     return miwae.mean(dim=BATCH_DIM), iwae.mean(dim=BATCH_DIM)
 
 def DREG_loss(res: VAEForwardResult) -> torch.Tensor:
-    return DREG(res).mean(dim=BATCH_DIM)
+    return DREG2(res).mean(dim=BATCH_DIM)
 
